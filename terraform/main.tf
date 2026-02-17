@@ -109,6 +109,7 @@ resource "azurerm_marketplace_agreement" "ghes" {
   plan      = "GitHub-Enterprise"
 }
 
+
 # ---------------- VM (OS-disk only / no data disk yet) ----------------
 resource "azurerm_linux_virtual_machine" "ghes" {
   name                = "${var.prefix}-ghe-server"
@@ -134,6 +135,12 @@ resource "azurerm_linux_virtual_machine" "ghes" {
     # keep OS disk disposable when you destroy
     # (default is deletable; included here for clarity)
     # NOTE: azurerm_linux_virtual_machine handles delete with the VM lifecycle.
+  }
+  
+  plan {
+    publisher = "GitHub"
+    product   = "GitHub-Enterprise"
+    name      = "GitHub-Enterprise"
   }
 
   source_image_reference {
