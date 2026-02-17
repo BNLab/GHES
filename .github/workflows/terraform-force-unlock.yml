@@ -1,22 +1,15 @@
-name: Terraform (Azure Gov) - GHES
+name: Terraform Force Unlock (Azure Gov)
 
 on:
   workflow_dispatch:
     inputs:
-      action:
-        description: apply or destroy
+      lock_id:
+        description: "Terraform lock ID from the error output"
         required: true
-        default: apply
-        type: choice
-        options: [apply, destroy]
-      tfvars_env:
-        description: name of tfvars file under terraform/env 
+      tf_state_key:
+        description: "Backend state key path (must match your normal pipeline)"
         required: true
-        default: gov-usgovvirginia
-
-concurrency:
-  group: tf-${{ github.repository }}-${{ github.event.inputs.tfvars_env }}
-  cancel-in-progress: true
+        default: "ghes/terraform.tfstate"
 
 permissions:
   id-token: write
@@ -25,11 +18,10 @@ permissions:
 env:
   TF_WORKDIR: terraform
 
-  # Remote state (create these once and reuse)
+  # Same remote state settings as your main workflow
   TF_STATE_RG: tfstate-gov-rg
   TF_STATE_STORAGE: bnlabazuredevworktfstate
   TF_STATE_CONTAINER: tfstate
-  TF_STATE_KEY: ghes/terraform.tfstate
 
   # Azure Gov via OIDC
   ARM_USE_OIDC: true
@@ -39,7 +31,7 @@ env:
   ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
 jobs:
-  terraform:
+  unlock:
     runs-on: ubuntu-latest
 
     steps:
@@ -62,35 +54,13 @@ jobs:
       - name: Terraform Init (remote state)
         working-directory: ${{ env.TF_WORKDIR }}
         run: |
-          terraform init \
+          terraform init -input=false \
             -backend-config="resource_group_name=${TF_STATE_RG}" \
             -backend-config="storage_account_name=${TF_STATE_STORAGE}" \
             -backend-config="container_name=${TF_STATE_CONTAINER}" \
-            -backend-config="key=${TF_STATE_KEY}"
+            -backend-config="key=${{ github.event.inputs.tf_state_key }}"
 
-      - name: Terraform Validate
-        working-directory: ${{ env.TF_WORKDIR }}
-        run: terraform validate
-
-      - name: Terraform Plan
+      - name: Force Unlock
         working-directory: ${{ env.TF_WORKDIR }}
         run: |
-          terraform plan \
-            -input=false \
-            -var-file="env/${{ github.event.inputs.tfvars_env }}.tfvars" \
-            -out=tfplan
-
-      - name: Terraform Apply
-        if: ${{ github.event.inputs.action == 'apply' }}
-        working-directory: ${{ env.TF_WORKDIR }}
-        run: terraform apply -auto-approve tfplan
-
-      - name: Terraform Destroy
-        if: ${{ github.event.inputs.action == 'destroy' }}
-        working-directory: ${{ env.TF_WORKDIR }}
-        run: |
-          terraform destroy \
-            -input=false \
-            -auto-approve \
-            -var-file="env/${{ github.event.inputs.tfvars_env }}.tfvars"
-
+          terraform force-unlock -force "${{ github.event.inputs.lock_id }}"
