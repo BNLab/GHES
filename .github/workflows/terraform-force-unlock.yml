@@ -1,0 +1,66 @@
+name: Terraform Force Unlock (Azure Gov)
+
+on:
+  workflow_dispatch:
+    inputs:
+      lock_id:
+        description: "Terraform lock ID from the error output"
+        required: true
+      tf_state_key:
+        description: "Backend state key path (must match your normal pipeline)"
+        required: true
+        default: "ghes/terraform.tfstate"
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  TF_WORKDIR: terraform
+
+  # Same remote state settings as your main workflow
+  TF_STATE_RG: tfstate-gov-rg
+  TF_STATE_STORAGE: bnlabazuredevworktfstate
+  TF_STATE_CONTAINER: tfstate
+
+  # Azure Gov via OIDC
+  ARM_USE_OIDC: true
+  ARM_ENVIRONMENT: usgovernment
+  ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+jobs:
+  unlock:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          environment: AzureUSGovernment
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.7.5
+
+      - name: Terraform Init (remote state)
+        working-directory: ${{ env.TF_WORKDIR }}
+        run: |
+          terraform init -input=false \
+            -backend-config="resource_group_name=${TF_STATE_RG}" \
+            -backend-config="storage_account_name=${TF_STATE_STORAGE}" \
+            -backend-config="container_name=${TF_STATE_CONTAINER}" \
+            -backend-config="key=${{ github.event.inputs.tf_state_key }}"
+
+      - name: Force Unlock
+        working-directory: ${{ env.TF_WORKDIR }}
+        run: |
+          terraform force-unlock -force "${{ github.event.inputs.lock_id }}"
