@@ -54,6 +54,34 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           environment: AzureUSGovernment
 
+      - name: List GitHub marketplace images in Azure Gov
+        run: |
+          az cloud set -n AzureUSGovernment
+          az vm image list \
+            --location usgovvirginia \
+            --publisher GitHub \
+            --all \
+            --query "[].{offer:offer, sku:sku, urn:urn}" \
+            -o table
+
+      - name: Register MarketplaceOrdering provider (Azure Gov)
+        run: |
+          az cloud set -n AzureUSGovernment
+          az provider register -n Microsoft.MarketplaceOrdering
+          az provider show -n Microsoft.MarketplaceOrdering --query "registrationState" -o tsv
+      
+      
+      - name: Accept GHES marketplace terms (Azure Gov) by URN
+        run: |
+          az cloud set -n AzureUSGovernment
+
+          URN="GitHub:GitHub-Enterprise:GitHub-Enterprise:3.17.7"
+          echo "Using URN: $URN"
+
+          az vm image terms show --urn "$URN" -o jsonc
+          az vm image terms accept --urn "$URN"
+
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
