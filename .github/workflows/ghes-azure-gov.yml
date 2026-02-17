@@ -10,9 +10,9 @@ on:
         type: choice
         options: [apply, destroy]
       tfvars_env:
-        description: name of tfvars file under terraform/env (optional)
-        required: false
-        default: ""
+        description: name of tfvars file under terraform/env 
+        required: true
+        default: gov-usgovvirginia
 
 concurrency:
   group: tf-${{ github.repository }}-${{ github.event.inputs.tfvars_env }}
@@ -75,12 +75,10 @@ jobs:
       - name: Terraform Plan
         working-directory: ${{ env.TF_WORKDIR }}
         run: |
-          set -e
-          TFVARS_ARG=""
-          if [ -n "${{ github.event.inputs.tfvars_env }}" ]; then
-            TFVARS_ARG="-var-file=env/${{ github.event.inputs.tfvars_env }}.tfvars"
-          fi
-          terraform plan $TFVARS_ARG -out=tfplan
+          terraform plan \
+            -input=false \
+            -var-file="env/${{ github.event.inputs.tfvars_env }}.tfvars" \
+            -out=tfplan
 
       - name: Terraform Apply
         if: ${{ github.event.inputs.action == 'apply' }}
@@ -91,9 +89,8 @@ jobs:
         if: ${{ github.event.inputs.action == 'destroy' }}
         working-directory: ${{ env.TF_WORKDIR }}
         run: |
-          set -e
-          TFVARS_ARG=""
-          if [ -n "${{ github.event.inputs.tfvars_env }}" ]; then
-            TFVARS_ARG="-var-file=env/${{ github.event.inputs.tfvars_env }}.tfvars"
-          fi
-          terraform destroy -auto-approve $TFVARS_ARG
+          terraform destroy \
+            -input=false \
+            -auto-approve \
+            -var-file="env/${{ github.event.inputs.tfvars_env }}.tfvars"
+
