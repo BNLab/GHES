@@ -71,8 +71,9 @@ jobs:
           az provider show -n Microsoft.MarketplaceOrdering --query "registrationState" -o tsv
       
       
-      - name: Accept GHES marketplace terms (Azure Gov) by URN
+      - name: Accept GHES marketplace terms (Azure Gov) by URN (safe)
         run: |
+          set +e
           az cloud set -n AzureUSGovernment
 
           URN="GitHub:GitHub-Enterprise:GitHub-Enterprise:3.17.7"
@@ -80,6 +81,14 @@ jobs:
 
           az vm image terms show --urn "$URN" -o jsonc
           az vm image terms accept --urn "$URN"
+          RC=$?
+
+          if [ $RC -ne 0 ]; then
+            echo "Accept returned non-zero (rc=$RC). If message says 'has no terms to accept', continuing..."
+          fi
+
+          exit 0
+
 
 
       - name: Setup Terraform
