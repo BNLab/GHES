@@ -64,7 +64,7 @@ jobs:
             --query "[].{offer:offer, sku:sku, urn:urn}" \
             -o table
 
-     - name: Register MarketplaceOrdering provider (Azure Gov)
+      - name: Register MarketplaceOrdering provider (Azure Gov)
         run: |
           az cloud set -n AzureUSGovernment
           az provider register -n Microsoft.MarketplaceOrdering
