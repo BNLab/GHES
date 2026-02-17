@@ -64,13 +64,21 @@ jobs:
             --query "[].{offer:offer, sku:sku, urn:urn}" \
             -o table
 
-      - name: Accept GHES marketplace terms (Azure Gov)
+      - name: Accept GHES marketplace terms (Azure Gov) by URN
         run: |
           az cloud set -n AzureUSGovernment
-          az vm image terms accept \
-            --publisher GitHub \
-            --offer GitHub-Enterprise \
-            --plan GitHub-Enterprise
+
+          GHES_VERSION="${{ vars.GHES_IMAGE_VERSION }}"
+          if [ -z "$GHES_VERSION" ]; then
+            GHES_VERSION="3.17.7"
+          fi
+
+          URN="GitHub:GitHub-Enterprise:GitHub-Enterprise:${GHES_VERSION}"
+
+          echo "Using URN: $URN"
+          az vm image terms show --urn "$URN" --location usgovvirginia -o jsonc
+          az vm image terms accept --urn "$URN" --location usgovvirginia
+
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
