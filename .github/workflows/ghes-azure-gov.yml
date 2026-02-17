@@ -1,0 +1,99 @@
+name: Terraform (Azure Gov) - GHES
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: apply or destroy
+        required: true
+        default: apply
+        type: choice
+        options: [apply, destroy]
+      tfvars_env:
+        description: name of tfvars file under terraform/env (optional)
+        required: false
+        default: ""
+
+concurrency:
+  group: tf-${{ github.repository }}-${{ github.event.inputs.tfvars_env }}
+  cancel-in-progress: true
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  TF_WORKDIR: terraform
+
+  # Remote state (create these once and reuse)
+  TF_STATE_RG: tfstate-gov-rg
+  TF_STATE_STORAGE: tfstategovstorage001   # <-- change
+  TF_STATE_CONTAINER: tfstate
+  TF_STATE_KEY: ghes/terraform.tfstate
+
+  # Azure Gov via OIDC
+  ARM_USE_OIDC: true
+  ARM_ENVIRONMENT: usgovernment
+  ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          environment: AzureUSGovernment
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.7.5
+
+      - name: Terraform Init (remote state)
+        working-directory: ${{ env.TF_WORKDIR }}
+        run: |
+          terraform init \
+            -backend-config="resource_group_name=${TF_STATE_RG}" \
+            -backend-config="storage_account_name=${TF_STATE_STORAGE}" \
+            -backend-config="container_name=${TF_STATE_CONTAINER}" \
+            -backend-config="key=${TF_STATE_KEY}"
+
+      - name: Terraform Validate
+        working-directory: ${{ env.TF_WORKDIR }}
+        run: terraform validate
+
+      - name: Terraform Plan
+        working-directory: ${{ env.TF_WORKDIR }}
+        run: |
+          set -e
+          TFVARS_ARG=""
+          if [ -n "${{ github.event.inputs.tfvars_env }}" ]; then
+            TFVARS_ARG="-var-file=env/${{ github.event.inputs.tfvars_env }}.tfvars"
+          fi
+          terraform plan $TFVARS_ARG -out=tfplan
+
+      - name: Terraform Apply
+        if: ${{ github.event.inputs.action == 'apply' }}
+        working-directory: ${{ env.TF_WORKDIR }}
+        run: terraform apply -auto-approve tfplan
+
+      - name: Terraform Destroy
+        if: ${{ github.event.inputs.action == 'destroy' }}
+        working-directory: ${{ env.TF_WORKDIR }}
+        run: |
+          set -e
+          TFVARS_ARG=""
+          if [ -n "${{ github.event.inputs.tfvars_env }}" ]; then
+            TFVARS_ARG="-var-file=env/${{ github.event.inputs.tfvars_env }}.tfvars"
+          fi
+          terraform destroy -auto-approve $TFVARS_ARG
