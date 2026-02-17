@@ -64,6 +64,13 @@ jobs:
             --query "[].{offer:offer, sku:sku, urn:urn}" \
             -o table
 
+      - name: Accept GHES marketplace terms (Azure Gov)
+        run: |
+          az cloud set -n AzureUSGovernment
+          az vm image terms accept \
+            --publisher GitHub \
+            --offer GitHub-Enterprise \
+            --plan GitHub-Enterprise
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3

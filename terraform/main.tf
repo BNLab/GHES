@@ -102,14 +102,6 @@ resource "azurerm_network_interface" "ghes_nic" {
   }
 }
 
-# ---------------- Marketplace agreement (often required) ----------------
-resource "azurerm_marketplace_agreement" "ghes" {
-  publisher = "GitHub"
-  offer     = "GitHub-Enterprise"
-  plan      = "GitHub-Enterprise"
-}
-
-
 # ---------------- VM (OS-disk only / no data disk yet) ----------------
 resource "azurerm_linux_virtual_machine" "ghes" {
   name                = "${var.prefix}-ghe-server"
@@ -153,6 +145,4 @@ resource "azurerm_linux_virtual_machine" "ghes" {
   tags = merge(var.tags, {
     role = "github-enterprise-server"
   })
-
-  depends_on = [azurerm_marketplace_agreement.ghes]
 }
