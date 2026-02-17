@@ -27,7 +27,7 @@ env:
 
   # Remote state (create these once and reuse)
   TF_STATE_RG: tfstate-gov-rg
-  TF_STATE_STORAGE: tfstategovstorage001   # <-- change
+  TF_STATE_STORAGE: bnlabazuredevworktfstate
   TF_STATE_CONTAINER: tfstate
   TF_STATE_KEY: ghes/terraform.tfstate
 
