@@ -64,20 +64,22 @@ jobs:
             --query "[].{offer:offer, sku:sku, urn:urn}" \
             -o table
 
+     - name: Register MarketplaceOrdering provider (Azure Gov)
+        run: |
+          az cloud set -n AzureUSGovernment
+          az provider register -n Microsoft.MarketplaceOrdering
+          az provider show -n Microsoft.MarketplaceOrdering --query "registrationState" -o tsv
+      
+      
       - name: Accept GHES marketplace terms (Azure Gov) by URN
         run: |
           az cloud set -n AzureUSGovernment
 
-          GHES_VERSION="${{ vars.GHES_IMAGE_VERSION }}"
-          if [ -z "$GHES_VERSION" ]; then
-            GHES_VERSION="3.17.7"
-          fi
-
-          URN="GitHub:GitHub-Enterprise:GitHub-Enterprise:${GHES_VERSION}"
-
+          URN="GitHub:GitHub-Enterprise:GitHub-Enterprise:3.17.7"
           echo "Using URN: $URN"
-          az vm image terms show --urn "$URN" --location usgovvirginia -o jsonc
-          az vm image terms accept --urn "$URN" --location usgovvirginia
+
+          az vm image terms show --urn "$URN" -o jsonc
+          az vm image terms accept --urn "$URN"
 
 
       - name: Setup Terraform
