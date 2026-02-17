@@ -54,6 +54,17 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           environment: AzureUSGovernment
 
+      - name: List GitHub marketplace images in Azure Gov
+        run: |
+          az cloud set -n AzureUSGovernment
+          az vm image list \
+            --location usgovvirginia \
+            --publisher GitHub \
+            --all \
+            --query "[].{offer:offer, sku:sku, urn:urn}" \
+            -o table
+
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
