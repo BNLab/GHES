@@ -139,7 +139,7 @@ resource "azurerm_linux_virtual_machine" "ghes" {
     publisher = "GitHub"
     offer     = "GitHub-Enterprise"
     sku       = "github-enterprise-gen2"
-    version   = var.ghes_image_version
+    version   = 3.19.0
   }
 
   tags = merge(var.tags, {
