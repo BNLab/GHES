@@ -76,7 +76,7 @@ jobs:
           set +e
           az cloud set -n AzureUSGovernment
 
-          URN="GitHub:GitHub-Enterprise:GitHub-Enterprise:3.17.7"
+          URN="GitHub:GitHub-Enterprise:github-enterprise-gen2:3.19.0"
           echo "Using URN: $URN"
 
           az vm image terms show --urn "$URN" -o jsonc
