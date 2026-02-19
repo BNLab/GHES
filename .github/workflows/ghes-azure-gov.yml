@@ -77,41 +77,21 @@ jobs:
           az provider register -n Microsoft.MarketplaceOrdering
           az provider show -n Microsoft.MarketplaceOrdering --query "registrationState" -o tsv
       
-      - name: Get GHES purchasePlan (Azure Gov)
-        shell: bash
-        run: |
-          set -euo pipefail
-          az cloud set --name AzureUSGovernment
-          az account set --subscription "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
-
-          az vm image show -l usgovvirginia \
-            -p GitHub \
-            -f GitHub-Enterprise \
-            -s github-enterprise-gen2 \
-            --version 3.19.0 \
-            --query "{publisher:publisher, offer:offer, sku:sku, version:name, purchasePlan:purchasePlan}" -o jsonc
-
+    
       - name: Accept GHES marketplace terms (Azure Gov)
         shell: bash
         run: |
           set -euo pipefail
           az cloud set --name AzureUSGovernment
           az account set --subscription "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
-
           LOC="usgovvirginia"
 
-          # Pull purchase plan identifiers from the image
-          PLAN_JSON=$(az vm image show -l "$LOC" -p GitHub -f GitHub-Enterprise -s github-enterprise-gen2 --version 3.19.0 \
-            --query "purchasePlan" -o json)
+          URN="GitHub:GitHub-Enterprise:github-enterprise-gen2:3.19.0"
+          echo "Accepting terms for URN: $URN"
 
-          PUB=$(echo "$PLAN_JSON" | jq -r '.publisher')
-          OFFER=$(echo "$PLAN_JSON" | jq -r '.product')
-          PLAN=$(echo "$PLAN_JSON" | jq -r '.name')
+          az vm image terms show --urn "$URN" -o jsonc
+          az vm image terms accept --urn "$URN" -o jsonc
 
-          echo "Using terms identifiers: publisher=$PUB offer=$OFFER plan=$PLAN"
-
-          az vm image terms show   --publisher "$PUB" --offer "$OFFER" --plan "$PLAN" -o jsonc
-          az vm image terms accept --publisher "$PUB" --offer "$OFFER" --plan "$PLAN" -o jsonc
 
 
       - name: Setup Terraform
