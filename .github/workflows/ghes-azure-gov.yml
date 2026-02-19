@@ -91,27 +91,27 @@ jobs:
             --version 3.19.0 \
             --query "{publisher:publisher, offer:offer, sku:sku, version:name, purchasePlan:purchasePlan}" -o jsonc
 
-    - name: Accept GHES marketplace terms (Azure Gov)
-      shell: bash
-      run: |
-        set -euo pipefail
-        az cloud set --name AzureUSGovernment
-        az account set --subscription "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+      - name: Accept GHES marketplace terms (Azure Gov)
+        shell: bash
+        run: |
+          set -euo pipefail
+          az cloud set --name AzureUSGovernment
+          az account set --subscription "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
 
-        LOC="usgovvirginia"
+          LOC="usgovvirginia"
 
-        # Pull purchase plan identifiers from the image
-        PLAN_JSON=$(az vm image show -l "$LOC" -p GitHub -f GitHub-Enterprise -s github-enterprise-gen2 --version 3.19.0 \
-          --query "purchasePlan" -o json)
+          # Pull purchase plan identifiers from the image
+          PLAN_JSON=$(az vm image show -l "$LOC" -p GitHub -f GitHub-Enterprise -s github-enterprise-gen2 --version 3.19.0 \
+            --query "purchasePlan" -o json)
 
-        PUB=$(echo "$PLAN_JSON" | jq -r '.publisher')
-        OFFER=$(echo "$PLAN_JSON" | jq -r '.product')
-        PLAN=$(echo "$PLAN_JSON" | jq -r '.name')
+          PUB=$(echo "$PLAN_JSON" | jq -r '.publisher')
+          OFFER=$(echo "$PLAN_JSON" | jq -r '.product')
+          PLAN=$(echo "$PLAN_JSON" | jq -r '.name')
 
-        echo "Using terms identifiers: publisher=$PUB offer=$OFFER plan=$PLAN"
+          echo "Using terms identifiers: publisher=$PUB offer=$OFFER plan=$PLAN"
 
-        az vm image terms show   --publisher "$PUB" --offer "$OFFER" --plan "$PLAN" -o jsonc
-        az vm image terms accept --publisher "$PUB" --offer "$OFFER" --plan "$PLAN" -o jsonc
+          az vm image terms show   --publisher "$PUB" --offer "$OFFER" --plan "$PLAN" -o jsonc
+          az vm image terms accept --publisher "$PUB" --offer "$OFFER" --plan "$PLAN" -o jsonc
 
 
       - name: Setup Terraform
@@ -121,7 +121,9 @@ jobs:
 
       - name: Terraform Init (remote state)
         working-directory: ${{ env.TF_WORKDIR }}
+        shell: bash
         run: |
+          set -euo pipefail
           terraform init \
             -backend-config="resource_group_name=${TF_STATE_RG}" \
             -backend-config="storage_account_name=${TF_STATE_STORAGE}" \
@@ -130,34 +132,37 @@ jobs:
 
       - name: Terraform Validate
         working-directory: ${{ env.TF_WORKDIR }}
-        run: terraform validate
+        shell: bash
+        run: |
+          set -euo pipefail
+          terraform validate
 
       - name: Terraform Plan
+        if: ${{ github.event.inputs.action == 'apply' }}
         working-directory: ${{ env.TF_WORKDIR }}
+        shell: bash
         run: |
+          set -euo pipefail
           terraform plan \
             -input=false \
             -var-file="env/${{ github.event.inputs.tfvars_env }}.tfvars" \
             -out=tfplan
 
-      #- name: Terraform Apply
-      #  if: ${{ github.event.inputs.action == 'apply' }}
-      #  working-directory: ${{ env.TF_WORKDIR }}
-      #  run: terraform apply -auto-approve tfplan
-
-      - name: Terraform Apply (no saved plan)
+      - name: Terraform Apply
+        if: ${{ github.event.inputs.action == 'apply' }}
         working-directory: ${{ env.TF_WORKDIR }}
+        shell: bash
         run: |
-          terraform apply -auto-approve \
-            -var-file="env/${{ github.event.inputs.tfvars_env }}.tfvars"
-
+          set -euo pipefail
+          terraform apply -auto-approve tfplan
 
       - name: Terraform Destroy
         if: ${{ github.event.inputs.action == 'destroy' }}
         working-directory: ${{ env.TF_WORKDIR }}
+        shell: bash
         run: |
+          set -euo pipefail
           terraform destroy \
             -input=false \
             -auto-approve \
             -var-file="env/${{ github.event.inputs.tfvars_env }}.tfvars"
-

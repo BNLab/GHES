@@ -135,13 +135,6 @@ resource "azurerm_linux_virtual_machine" "ghes" {
     name      = "github-enterprise-gen2"
   }
 
-  #plan {
-  #  publisher = "<purchasePlan.publisher>"
-  #  product   = "<purchasePlan.product>"
-  #  name      = "<purchasePlan.name>"
-  #}
-
-
   source_image_reference {
     publisher = "GitHub"
     offer     = "GitHub-Enterprise"
