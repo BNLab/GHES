@@ -43,5 +43,5 @@ variable "vm_size" {
 # Optional: pin a specific marketplace version if you want stability
 variable "ghes_image_version" {
   type        = string
-  default     = "latest"
+  default     = "3.19.0"
 }
