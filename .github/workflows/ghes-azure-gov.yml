@@ -54,6 +54,24 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           environment: AzureUSGovernment
 
+      - name: Verify GHES image URNs (Azure Gov)
+        shell: bash
+        run: |
+          set -euo pipefail
+          az cloud set --name AzureUSGovernment
+          az account set --subscription "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+          LOC="usgovvirginia"
+
+          echo "Offers under publisher GitHub:"
+          az vm image list-offers -l "$LOC" -p "GitHub" -o table
+
+          echo "SKUs under GitHub-Enterprise:"
+          az vm image list-skus -l "$LOC" -p "GitHub" -f "GitHub-Enterprise" -o table
+
+          echo "Show image (Gen2 SKU example):"
+          az vm image show -l "$LOC" -p "GitHub" -f "GitHub-Enterprise" -s "github-enterprise-gen2" --version 3.19.0 -o jsonc
+
+
       - name: List GitHub marketplace images in Azure Gov
         run: |
           az cloud set -n AzureUSGovernment
