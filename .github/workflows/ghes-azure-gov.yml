@@ -117,10 +117,17 @@ jobs:
             -var-file="env/${{ github.event.inputs.tfvars_env }}.tfvars" \
             -out=tfplan
 
-      - name: Terraform Apply
-        if: ${{ github.event.inputs.action == 'apply' }}
+      #- name: Terraform Apply
+      #  if: ${{ github.event.inputs.action == 'apply' }}
+      #  working-directory: ${{ env.TF_WORKDIR }}
+      #  run: terraform apply -auto-approve tfplan
+
+      - name: Terraform Apply (no saved plan)
         working-directory: ${{ env.TF_WORKDIR }}
-        run: terraform apply -auto-approve tfplan
+        run: |
+          terraform apply -auto-approve \
+            -var-file="env/${{ github.event.inputs.tfvars_env }}.tfvars"
+
 
       - name: Terraform Destroy
         if: ${{ github.event.inputs.action == 'destroy' }}
