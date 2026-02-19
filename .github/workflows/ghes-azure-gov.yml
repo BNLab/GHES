@@ -71,41 +71,48 @@ jobs:
           echo "Show image (Gen2 SKU example):"
           az vm image show -l "$LOC" -p "GitHub" -f "GitHub-Enterprise" -s "github-enterprise-gen2" --version 3.19.0 -o jsonc
 
-
-      - name: List GitHub marketplace images in Azure Gov
-        run: |
-          az cloud set -n AzureUSGovernment
-          az vm image list \
-            --location usgovvirginia \
-            --publisher GitHub \
-            --all \
-            --query "[].{offer:offer, sku:sku, urn:urn}" \
-            -o table
-
       - name: Register MarketplaceOrdering provider (Azure Gov)
         run: |
           az cloud set -n AzureUSGovernment
           az provider register -n Microsoft.MarketplaceOrdering
           az provider show -n Microsoft.MarketplaceOrdering --query "registrationState" -o tsv
       
-      
-      - name: Accept GHES marketplace terms (Azure Gov)
+      - name: Get GHES purchasePlan (Azure Gov)
         shell: bash
         run: |
           set -euo pipefail
           az cloud set --name AzureUSGovernment
           az account set --subscription "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
 
-          LOC="usgovvirginia"
-          PUB="GitHub"
-          OFFER="GitHub-Enterprise"
-          PLAN="github-enterprise-gen2"
+          az vm image show -l usgovvirginia \
+            -p GitHub \
+            -f GitHub-Enterprise \
+            -s github-enterprise-gen2 \
+            --version 3.19.0 \
+            --query "{publisher:publisher, offer:offer, sku:sku, version:name, purchasePlan:purchasePlan}" -o jsonc
 
-          echo "Showing terms..."
-          az vm image terms show --publisher "$PUB" --offer "$OFFER" --plan "$PLAN" -o jsonc
+    - name: Accept GHES marketplace terms (Azure Gov)
+      shell: bash
+      run: |
+        set -euo pipefail
+        az cloud set --name AzureUSGovernment
+        az account set --subscription "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
 
-          echo "Accepting terms..."
-          az vm image terms accept --publisher "$PUB" --offer "$OFFER" --plan "$PLAN" -o jsonc
+        LOC="usgovvirginia"
+
+        # Pull purchase plan identifiers from the image
+        PLAN_JSON=$(az vm image show -l "$LOC" -p GitHub -f GitHub-Enterprise -s github-enterprise-gen2 --version 3.19.0 \
+          --query "purchasePlan" -o json)
+
+        PUB=$(echo "$PLAN_JSON" | jq -r '.publisher')
+        OFFER=$(echo "$PLAN_JSON" | jq -r '.product')
+        PLAN=$(echo "$PLAN_JSON" | jq -r '.name')
+
+        echo "Using terms identifiers: publisher=$PUB offer=$OFFER plan=$PLAN"
+
+        az vm image terms show   --publisher "$PUB" --offer "$OFFER" --plan "$PLAN" -o jsonc
+        az vm image terms accept --publisher "$PUB" --offer "$OFFER" --plan "$PLAN" -o jsonc
+
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
