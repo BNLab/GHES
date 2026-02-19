@@ -89,25 +89,23 @@ jobs:
           az provider show -n Microsoft.MarketplaceOrdering --query "registrationState" -o tsv
       
       
-      - name: Accept GHES marketplace terms (Azure Gov) by URN (safe)
+      - name: Accept GHES marketplace terms (Azure Gov)
+        shell: bash
         run: |
-          set +e
-          az cloud set -n AzureUSGovernment
+          set -euo pipefail
+          az cloud set --name AzureUSGovernment
+          az account set --subscription "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
 
-          URN="GitHub:GitHub-Enterprise:github-enterprise-gen2:3.19.0"
-          echo "Using URN: $URN"
+          LOC="usgovvirginia"
+          PUB="GitHub"
+          OFFER="GitHub-Enterprise"
+          PLAN="github-enterprise-gen2"
 
-          az vm image terms show --urn "$URN" -o jsonc
-          az vm image terms accept --urn "$URN"
-          RC=$?
+          echo "Showing terms..."
+          az vm image terms show --publisher "$PUB" --offer "$OFFER" --plan "$PLAN" -o jsonc
 
-          if [ $RC -ne 0 ]; then
-            echo "Accept returned non-zero (rc=$RC). If message says 'has no terms to accept', continuing..."
-          fi
-
-          exit 0
-
-
+          echo "Accepting terms..."
+          az vm image terms accept --publisher "$PUB" --offer "$OFFER" --plan "$PLAN" -o jsonc
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
