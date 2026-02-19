@@ -129,11 +129,18 @@ resource "azurerm_linux_virtual_machine" "ghes" {
     # NOTE: azurerm_linux_virtual_machine handles delete with the VM lifecycle.
   }
   
+  #plan {
+  #  publisher = "GitHub"
+  #  product   = "GitHub-Enterprise"
+  #  name      = "github-enterprise-gen2"
+  #}
+  
   plan {
-    publisher = "GitHub"
-    product   = "GitHub-Enterprise"
-    name      = "github-enterprise-gen2"
-  }
+  publisher = "<purchasePlan.publisher>"
+  product   = "<purchasePlan.product>"
+  name      = "<purchasePlan.name>"
+}
+
 
   source_image_reference {
     publisher = "GitHub"
