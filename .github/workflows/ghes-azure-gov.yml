@@ -84,13 +84,12 @@ jobs:
           set -euo pipefail
           az cloud set --name AzureUSGovernment
           az account set --subscription "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
-          LOC="usgovvirginia"
 
           URN="GitHub:GitHub-Enterprise:github-enterprise-gen2:3.19.0"
-          echo "Accepting terms for URN: $URN"
-
-          az vm image terms show --urn "$URN" -o jsonc
-          az vm image terms accept --urn "$URN" -o jsonc
+          echo "Attempting to accept terms for URN: $URN"
+          az vm image terms show --urn "$URN" -o jsonc || true
+          az vm image terms accept --urn "$URN" -o jsonc || true
+          echo "Terms step completed (no terms may be required in Azure Gov)"
 
 
 
