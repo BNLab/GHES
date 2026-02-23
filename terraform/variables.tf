@@ -37,7 +37,7 @@ variable "ssh_public_key" {
 variable "vm_size" {
   type        = string
   description = "GHES recommended sizes vary by user count; start with something like Standard_D4s_v5 if available"
-  default     = "Standard_D4s_v5"
+  default     = "Standard_D8s_v3"
 }
 
 # Optional: pin a specific marketplace version if you want stability
