@@ -102,7 +102,7 @@ resource "azurerm_network_interface" "ghes_nic" {
   }
 }
 
-# ---------------- VM (OS-disk only / no data disk yet) ----------------
+# ---------------- VM (OS-disk) ----------------
 resource "azurerm_linux_virtual_machine" "ghes" {
   name                = "${var.prefix}-ghe-server"
   location            = var.location
@@ -128,12 +128,6 @@ resource "azurerm_linux_virtual_machine" "ghes" {
     # (default is deletable; included here for clarity)
     # NOTE: azurerm_linux_virtual_machine handles delete with the VM lifecycle.
   }
-  
-  #plan {
-  #  publisher = "GitHub"
-  #  product   = "GitHub-Enterprise"
-  #  name      = "github-enterprise-gen2"
-  #}
 
   source_image_reference {
     publisher = "GitHub"
@@ -146,3 +140,22 @@ resource "azurerm_linux_virtual_machine" "ghes" {
     role = "github-enterprise-server"
   })
 }
+
+# ---------------- Data Disk ----------------
+resource "azurerm_managed_disk" "ghes_data" {
+  name                 = "${var.prefix}-ghes-datadisk"
+  location             = var.location
+  resource_group_name  = azurerm_resource_group.rg.name
+  storage_account_type = "Premium_LRS"
+  create_option        = "Empty"
+  disk_size_gb         = 150
+  tags                 = var.tags
+}
+
+resource "azurerm_virtual_machine_data_disk_attachment" "ghes_data" {
+  managed_disk_id    = azurerm_managed_disk.ghes_data.id
+  virtual_machine_id = azurerm_linux_virtual_machine.ghes.id
+  lun                = 0
+  caching            = "ReadWrite"
+}
+
