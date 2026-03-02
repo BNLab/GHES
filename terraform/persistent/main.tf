@@ -49,3 +49,8 @@ resource "azurerm_managed_disk" "ghes_data" {
     prevent_destroy = true
   }
 }
+
+import {
+  to = azurerm_storage_account.tfstate
+  id = "/subscriptions/${var.subscription_id}/resourceGroups/tfstate-gov-rg/providers/Microsoft.Storage/storageAccounts/bnlabazuredevworktfstate"
+}
