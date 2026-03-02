@@ -30,6 +30,12 @@ resource "azurerm_storage_account" "tfstate" {
   }
 }
 
+
+import {
+  to = azurerm_storage_container.tfstate
+  id = "https://bnlabazuredevworktfstate.blob.core.usgovcloudapi.net/tfstate"
+}
+
 resource "azurerm_storage_container" "tfstate" {
   name                  = "tfstate"
   storage_account_name  = azurerm_storage_account.tfstate.name
