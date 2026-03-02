@@ -9,6 +9,10 @@ on:
         default: apply
         type: choice
         options: [apply, destroy]
+      tfvars_env:
+        description: name of tfvars file under terraform/persistent/env
+        required: true
+        default: gov-usgovvirginia
 
 permissions:
   id-token: write
@@ -61,7 +65,10 @@ jobs:
         if: ${{ github.event.inputs.action == 'apply' }}
         working-directory: ${{ env.TF_WORKDIR }}
         run: |
-          terraform plan -input=false -out=tfplan
+          terraform plan \
+            -input=false \
+            -var-file="env/${{ github.event.inputs.tfvars_env }}.tfvars" \
+            -out=tfplan
 
       - name: Terraform Apply
         if: ${{ github.event.inputs.action == 'apply' }}
@@ -73,4 +80,7 @@ jobs:
         if: ${{ github.event.inputs.action == 'destroy' }}
         working-directory: ${{ env.TF_WORKDIR }}
         run: |
-          terraform destroy -input=false -auto-approve
+          terraform destroy \
+            -input=false \
+            -auto-approve \
+            -var-file="env/${{ github.event.inputs.tfvars_env }}.tfvars"
