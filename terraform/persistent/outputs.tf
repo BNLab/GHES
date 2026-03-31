@@ -13,3 +13,8 @@ output "tfstate_container_name" {
 output "ghes_data_disk_id" {
   value = azurerm_managed_disk.ghes_data.id
 }
+
+output "ghes_migration_connection_string" {
+  value     = azurerm_storage_account.ghes_migration.primary_connection_string
+  sensitive = true
+}
