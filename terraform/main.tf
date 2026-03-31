@@ -80,18 +80,30 @@ resource "azurerm_network_security_group" "ghes_nsg" {
     source_address_prefixes    = ["0.0.0.0/0"] # tighten later
     destination_address_prefix = "*"
   }
-  
+
   security_rule {
-  name                       = "Allow-GHES-Management"
-  priority                   = 1030
-  direction                  = "Inbound"
-  access                     = "Allow"
-  protocol                   = "Tcp"
-  source_port_range          = "*"
-  destination_port_range     = "8443"
-  source_address_prefixes    = ["0.0.0.0/0"]
-  destination_address_prefix = "*"
-}
+    name                       = "Allow-GHES-Management"
+    priority                   = 1030
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "8443"
+    source_address_prefixes    = ["0.0.0.0/0"]
+    destination_address_prefix = "*"
+  }
+
+  security_rule {
+    name                       = "Allow-GHES-Admin-SSH"
+    priority                   = 1040
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "122"
+    source_address_prefixes    = ["0.0.0.0/0"]
+    destination_address_prefix = "*"
+  }
 }
 
 resource "azurerm_subnet_network_security_group_association" "vm_subnet_assoc" {
