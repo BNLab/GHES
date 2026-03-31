@@ -60,3 +60,22 @@ resource "azurerm_managed_disk" "ghes_data" {
     prevent_destroy = true
   }
 }
+
+# ---------------- GHES Migration Storage ----------------
+resource "azurerm_storage_account" "ghes_migration" {
+  name                     = "${replace(var.prefix, "-", "")}ghesmigration"
+  resource_group_name      = azurerm_resource_group.persistent_rg.name
+  location                 = azurerm_resource_group.persistent_rg.location
+  account_tier             = "Standard"
+  account_replication_type = "LRS"
+  account_kind             = "StorageV2"
+  min_tls_version          = "TLS1_2"
+
+  tags = var.tags
+}
+
+resource "azurerm_storage_container" "ghes_migration" {
+  name                  = "ghes-migration"
+  storage_account_name  = azurerm_storage_account.ghes_migration.name
+  container_access_type = "private"
+}
