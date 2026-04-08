@@ -130,6 +130,7 @@ resource "azurerm_network_interface" "ghes_nic" {
     subnet_id                     = azurerm_subnet.vm_subnet.id
     private_ip_address_allocation = "Dynamic"
     public_ip_address_id          = data.azurerm_public_ip.ghes_pip.id
+  }
 }
 
 # ---------------- VM (OS-disk) ----------------
