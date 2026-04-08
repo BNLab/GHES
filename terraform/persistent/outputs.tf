@@ -18,3 +18,13 @@ output "ghes_migration_connection_string" {
   value     = azurerm_storage_account.ghes_migration.primary_connection_string
   sensitive = true
 }
+
+output "ghes_static_ip_id" {
+  value       = azurerm_public_ip.ghes_static_ip.id
+  description = "Resource ID of the static IP — referenced by GHES infra"
+}
+
+output "ghes_static_ip_address" {
+  value       = azurerm_public_ip.ghes_static_ip.ip_address
+  description = "The actual static IP address"
+}

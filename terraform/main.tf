@@ -26,16 +26,10 @@ resource "azurerm_subnet" "vm_subnet" {
   address_prefixes     = [var.vm_subnet_cidr]
 }
 
-# ---------------- Public IP (static) ----------------
-resource "azurerm_public_ip" "ghes_pip" {
+# ---------------- Public IP (from persistent RG) ----------------
+data "azurerm_public_ip" "ghes_pip" {
   name                = "${var.prefix}-ghes-pip"
-  resource_group_name = azurerm_resource_group.rg.name
-  location            = var.location
-
-  allocation_method = "Static"
-  sku               = "Standard"
-
-  tags = var.tags
+  resource_group_name = "${var.prefix}-persistent-rg"
 }
 
 # ---------------- NSG ----------------
@@ -135,7 +129,7 @@ resource "azurerm_network_interface" "ghes_nic" {
     name                          = "ipconfig1"
     subnet_id                     = azurerm_subnet.vm_subnet.id
     private_ip_address_allocation = "Dynamic"
-    public_ip_address_id          = azurerm_public_ip.ghes_pip.id
+    public_ip_address_id          = data.azurerm_public_ip.ghes_pip.id
   }
 }
 
@@ -177,18 +171,6 @@ resource "azurerm_linux_virtual_machine" "ghes" {
     role = "github-enterprise-server"
   })
 }
-
-# ---------------- Data Disk ----------------
-#resource "azurerm_managed_disk" "ghes_data" {
-#  name                 = "${var.prefix}-ghes-datadisk"
-#  location             = var.location
-#  resource_group_name  = azurerm_resource_group.rg.name
-#  storage_account_type = "Premium_LRS"
-#  create_option        = "Empty"
-#  disk_size_gb         = 150
-#  tags                 = var.tags
-#}
-
 
 # Look up the persistent disk by name and resource group
 data "azurerm_managed_disk" "ghes_data" {
