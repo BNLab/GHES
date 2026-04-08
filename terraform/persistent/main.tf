@@ -91,3 +91,4 @@ resource "azurerm_public_ip" "ghes_static_ip" {
   lifecycle {
     prevent_destroy = true
   }
+  }
