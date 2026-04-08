@@ -104,6 +104,19 @@ resource "azurerm_network_security_group" "ghes_nsg" {
     source_address_prefixes    = ["0.0.0.0/0"]
     destination_address_prefix = "*"
   }
+
+
+  security_rule {
+    name                       = "Allow-GIT Protocol"
+    priority                   = 1050
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "9418"
+    source_address_prefixes    = ["0.0.0.0/0"]
+    destination_address_prefix = "*"
+  }
 }
 
 resource "azurerm_subnet_network_security_group_association" "vm_subnet_assoc" {
