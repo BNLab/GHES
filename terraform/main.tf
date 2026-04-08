@@ -107,7 +107,7 @@ resource "azurerm_network_security_group" "ghes_nsg" {
 
 
   security_rule {
-    name                       = "Allow-GIT Protocol"
+    name                       = "Allow-GIT-Protocol"
     priority                   = 1050
     direction                  = "Inbound"
     access                     = "Allow"
