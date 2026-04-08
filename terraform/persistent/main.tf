@@ -79,3 +79,15 @@ resource "azurerm_storage_container" "ghes_migration" {
   storage_account_name  = azurerm_storage_account.ghes_migration.name
   container_access_type = "private"
 }
+
+# Static Public IP — lives in persistent RG
+resource "azurerm_public_ip" "ghes_static_ip" {
+  name                = "${var.prefix}-ghes-pip"
+  location            = var.location
+  resource_group_name = azurerm_resource_group.persistent_rg.name
+  allocation_method   = "Static"
+  sku                 = "Standard"
+
+  lifecycle {
+    prevent_destroy = true
+  }
