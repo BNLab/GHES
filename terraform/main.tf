@@ -27,9 +27,18 @@ resource "azurerm_subnet" "vm_subnet" {
 }
 
 # ---------------- Public IP (from persistent RG) ----------------
-data "azurerm_public_ip" "ghes_pip" {
-  name                = "${var.prefix}-ghes-pip"
-  resource_group_name = "${var.prefix}-persistent-rg"
+#data "azurerm_public_ip" "ghes_pip" {
+#  name                = "${var.prefix}-ghes-pip"
+#  resource_group_name = "${var.prefix}-persistent-rg"
+#}
+
+resource "azurerm_public_ip" "ghes_pip" {
+  name                = "ghes-dev-ghes-pip"
+  location            = var.location
+  resource_group_name = var.persistent-rg
+
+  allocation_method   = "Static"
+  sku                 = "Standard"
 }
 
 # ---------------- NSG ----------------
