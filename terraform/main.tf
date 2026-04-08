@@ -129,7 +129,7 @@ resource "azurerm_network_interface" "ghes_nic" {
     name                          = "ipconfig1"
     subnet_id                     = azurerm_subnet.vm_subnet.id
     private_ip_address_allocation = "Dynamic"
-    public_ip_address_id          = null #data.azurerm_public_ip.ghes_pip.id
+    public_ip_address_id          = azurerm_public_ip.ghes_pip.id
   }
 }
 
@@ -171,6 +171,18 @@ resource "azurerm_linux_virtual_machine" "ghes" {
     role = "github-enterprise-server"
   })
 }
+
+# ---------------- Data Disk ----------------
+#resource "azurerm_managed_disk" "ghes_data" {
+#  name                 = "${var.prefix}-ghes-datadisk"
+#  location             = var.location
+#  resource_group_name  = azurerm_resource_group.rg.name
+#  storage_account_type = "Premium_LRS"
+#  create_option        = "Empty"
+#  disk_size_gb         = 150
+#  tags                 = var.tags
+#}
+
 
 # Look up the persistent disk by name and resource group
 data "azurerm_managed_disk" "ghes_data" {
